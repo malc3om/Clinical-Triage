@@ -1,0 +1,428 @@
+
+<style>
+* { box-sizing: border-box; }
+body, div { font-family: var(--font-sans); }
+.section { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1rem; background: var(--color-background-primary); }
+.section-title { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-tertiary); margin: 0 0 0.75rem; }
+.tag { display: inline-block; font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 500; margin-right: 4px; margin-bottom: 4px; }
+.tag-blue { background: var(--color-background-info); color: var(--color-text-info); }
+.tag-green { background: var(--color-background-success); color: var(--color-text-success); }
+.tag-warn { background: var(--color-background-warning); color: var(--color-text-warning); }
+.tag-danger { background: var(--color-background-danger); color: var(--color-text-danger); }
+.tag-purple { background: #EEEDFE; color: #3C3489; }
+.task-card { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 1rem; margin-bottom: 0.75rem; }
+.task-easy { border-left: 3px solid #1D9E75; }
+.task-med { border-left: 3px solid #BA7517; }
+.task-hard { border-left: 3px solid #A32D2D; }
+.task-title { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin: 0 0 4px; }
+.task-desc { font-size: 13px; color: var(--color-text-secondary); margin: 0 0 8px; line-height: 1.5; }
+.reward-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; font-size: 13px; }
+.reward-bar-wrap { flex: 1; height: 6px; background: var(--color-border-tertiary); border-radius: 3px; overflow: hidden; }
+.reward-bar { height: 100%; border-radius: 3px; }
+.api-pill { font-size: 12px; font-family: var(--font-mono); background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); padding: 3px 8px; border-radius: 4px; color: var(--color-text-secondary); display: inline-block; margin: 2px; }
+.check { color: var(--color-text-success); font-size: 13px; }
+.cross { color: var(--color-text-danger); font-size: 13px; }
+.score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.score-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 0.75rem; }
+.score-num { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+.score-label { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+.tab-row { display: flex; gap: 4px; margin-bottom: 1rem; }
+.tab { font-size: 12px; padding: 6px 12px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary); cursor: pointer; color: var(--color-text-secondary); background: transparent; }
+.tab.active { background: var(--color-background-info); color: var(--color-text-info); border-color: transparent; font-weight: 500; }
+.panel { display: none; }
+.panel.active { display: block; }
+.code-block { font-family: var(--font-mono); font-size: 11px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 0.75rem; line-height: 1.6; color: var(--color-text-secondary); white-space: pre-wrap; margin-top: 8px; }
+.row { display: flex; gap: 8px; align-items: baseline; }
+h2 { font-size: 18px; font-weight: 500; margin: 0 0 4px; color: var(--color-text-primary); }
+p { font-size: 13px; color: var(--color-text-secondary); margin: 0 0 8px; line-height: 1.6; }
+.checklist-item { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; padding: 6px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.checklist-item:last-child { border: none; }
+.ci-label { flex: 1; color: var(--color-text-primary); }
+.ci-desc { font-size: 12px; color: var(--color-text-tertiary); margin-top: 2px; }
+</style>
+
+<div style="padding: 0.5rem 0 1.5rem;">
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+    <h2>AntiGravity Research Lab — OpenEnv</h2>
+    <span class="tag tag-blue">Real-world domain</span>
+    <span class="tag tag-green">Novel</span>
+  </div>
+  <p style="font-size:14px;">An AI agent acts as a propulsion engineer running experiments on a simulated magnetic levitation & propulsion testbed. It must tune parameters, diagnose anomalies, and optimize flight profiles — tasks that mirror real aerospace R&amp;D workflows.</p>
+
+  <div class="tab-row">
+    <button class="tab active" onclick="show('overview')">Overview</button>
+    <button class="tab" onclick="show('tasks')">Tasks &amp; Graders</button>
+    <button class="tab" onclick="show('reward')">Reward Design</button>
+    <button class="tab" onclick="show('spec')">OpenEnv Spec</button>
+    <button class="tab" onclick="show('checklist')">Checklist</button>
+    <button class="tab" onclick="show('scoring')">Scoring</button>
+  </div>
+
+  <div id="overview" class="panel active">
+    <div class="section">
+      <div class="section-title">Domain motivation</div>
+      <p>Magnetic levitation and propulsion research is a genuine, high-stakes engineering discipline. Real engineers spend hours iterating on coil configurations, power schedules, and stability controllers. No OpenEnv environment currently models this domain — strong novelty signal.</p>
+      <p>The environment simulates a <strong style="font-weight:500;">MagLev Propulsion Test Rig</strong>: a linear track with controllable electromagnet arrays, a levitating payload, onboard sensors, and a fault injection system. The agent issues control commands and receives physics-grounded observations.</p>
+    </div>
+    <div class="section">
+      <div class="section-title">Action space</div>
+      <p>Actions are typed Pydantic models submitted via <span class="api-pill">POST /step</span>. Each action contains:</p>
+      <div class="code-block">class Action(BaseModel):
+    coil_power: List[float]      # 0.0–1.0, per coil segment (8 values)
+    stabilizer_gain: float       # PID proportional gain 0.0–10.0
+    target_altitude: float       # meters, 0.01–0.50
+    thrust_vector: Tuple[float,float]  # (x, z) normalized direction
+    diagnostic_probe: Optional[str]    # sensor ID to query, or None</div>
+    </div>
+    <div class="section">
+      <div class="section-title">Observation space</div>
+      <p>Returned after each step — typed Pydantic model:</p>
+      <div class="code-block">class Observation(BaseModel):
+    altitude: float              # current payload height (m)
+    velocity: Tuple[float,float,float]  # vx, vy, vz (m/s)
+    coil_temperatures: List[float]      # °C per coil
+    magnetic_flux: List[float]          # Tesla per segment
+    fault_flags: List[str]              # active system faults
+    energy_consumed: float              # joules this step
+    stability_index: float              # 0.0–1.0
+    time_step: int                      # episode step counter</div>
+    </div>
+    <div class="section">
+      <div class="section-title">Environment API endpoints</div>
+      <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
+        <span class="api-pill">POST /step</span>
+        <span class="api-pill">POST /reset</span>
+        <span class="api-pill">GET /state</span>
+        <span class="api-pill">GET /tasks</span>
+        <span class="api-pill">POST /grader</span>
+        <span class="api-pill">GET /baseline</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="tasks" class="panel">
+    <div class="task-card task-easy">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="task-title">Task 1 — Stable Levitation (Easy)</div>
+        <span class="tag tag-green">Score 0.0 – 1.0</span>
+      </div>
+      <div class="task-desc">Achieve and maintain stable hover at exactly 0.20 m altitude for 30 consecutive steps. The payload starts on the track (altitude = 0). The agent must ramp coil power, tune the stabilizer gain, and hold the target height without crashing or overheating any coil.</div>
+      <div class="tag tag-blue">Deterministic grader</div>
+      <div class="tag tag-green">Partial credit</div>
+      <div style="margin-top:8px; font-size:12px; color:var(--color-text-tertiary);">
+        Grader formula: <code style="font-family:var(--font-mono);">score = (steps_in_band / 30) × stability_bonus − overtemp_penalty</code>
+      </div>
+      <div style="margin-top:6px; font-size:12px; color:var(--color-text-secondary);">
+        <strong style="font-weight:500;">Success criteria:</strong> altitude within ±0.02 m of 0.20 m for all 30 steps, no coil temp &gt; 85°C, no fault flags active. Score 1.0 if all met.
+      </div>
+    </div>
+
+    <div class="task-card task-med">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="task-title">Task 2 — Fault Recovery (Medium)</div>
+        <span class="tag tag-warn">Score 0.0 – 1.0</span>
+      </div>
+      <div class="task-desc">The environment injects a random single-coil fault at a hidden step (between steps 5–15). The agent must detect the fault via the diagnostic_probe action, identify which coil failed, redistribute power to compensate, and restore stable levitation within 20 steps of fault onset — all without losing the payload (altitude must never reach 0).</div>
+      <div class="tag tag-blue">Deterministic grader</div>
+      <div class="tag tag-warn">Multi-signal reward</div>
+      <div style="margin-top:8px; font-size:12px; color:var(--color-text-tertiary);">
+        Grader formula: <code style="font-family:var(--font-mono);">score = detection_bonus + recovery_speed_score − altitude_loss_penalty</code>
+      </div>
+      <div style="margin-top:6px; font-size:12px; color:var(--color-text-secondary);">
+        <strong style="font-weight:500;">Success criteria:</strong> correct fault identified within 5 steps of onset (0.3 pts), altitude never drops below 0.05 m (0.3 pts), stable levitation restored (0.4 pts).
+      </div>
+    </div>
+
+    <div class="task-card task-hard">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="task-title">Task 3 — Minimum-Energy Transit (Hard)</div>
+        <span class="tag tag-danger">Score 0.0 – 1.0</span>
+      </div>
+      <div class="task-desc">Navigate the payload from start position to a target position 2.0 m along the track in the minimum possible energy budget. The agent must plan a thrust schedule, manage altitude during acceleration/deceleration phases, avoid thermal runaway on any coil, and arrive within a 0.05 m position window — all within 60 steps. Optimal energy is pre-computed; score scales inversely with energy overspend.</div>
+      <div class="tag tag-blue">Deterministic grader</div>
+      <div class="tag tag-danger">Challenges frontier models</div>
+      <div style="margin-top:8px; font-size:12px; color:var(--color-text-tertiary);">
+        Grader formula: <code style="font-family:var(--font-mono);">score = arrival_bonus × (E_optimal / E_actual) − crash_penalty</code>
+      </div>
+      <div style="margin-top:6px; font-size:12px; color:var(--color-text-secondary);">
+        <strong style="font-weight:500;">Success criteria:</strong> reaches target window (0.5 pts), energy efficiency ratio (0–0.4 pts), no coil failures during transit (0.1 pts). Score 0 if payload crashes.
+      </div>
+    </div>
+
+    <div class="section" style="margin-top:1rem;">
+      <div class="section-title">Why these tasks genuinely challenge frontier models</div>
+      <p>Task 1 tests basic control loop understanding. Task 2 requires <em>active probing</em> — the agent must choose to spend a step on diagnostics rather than control, which is a non-obvious trade-off. Task 3 requires multi-step planning with a physics constraint (energy is path-dependent), which defeats naive greedy strategies.</p>
+    </div>
+  </div>
+
+  <div id="reward" class="panel">
+    <div class="section">
+      <div class="section-title">Reward signal design</div>
+      <p>Rewards are <strong style="font-weight:500;">dense throughout the trajectory</strong> — not just at episode end. Every step returns a float reward composed of weighted sub-signals.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Per-step reward components</div>
+      <div class="reward-row">
+        <span style="min-width:160px; color:var(--color-text-primary); font-size:13px;">Altitude closeness</span>
+        <div class="reward-bar-wrap"><div class="reward-bar" style="width:80%; background:#1D9E75;"></div></div>
+        <span style="font-size:12px; color:var(--color-text-secondary);">+0.0 to +0.4</span>
+      </div>
+      <div class="reward-row">
+        <span style="min-width:160px; color:var(--color-text-primary); font-size:13px;">Stability index</span>
+        <div class="reward-bar-wrap"><div class="reward-bar" style="width:60%; background:#3B8BD4;"></div></div>
+        <span style="font-size:12px; color:var(--color-text-secondary);">+0.0 to +0.3</span>
+      </div>
+      <div class="reward-row">
+        <span style="min-width:160px; color:var(--color-text-primary); font-size:13px;">Energy efficiency</span>
+        <div class="reward-bar-wrap"><div class="reward-bar" style="width:40%; background:#BA7517;"></div></div>
+        <span style="font-size:12px; color:var(--color-text-secondary);">+0.0 to +0.2</span>
+      </div>
+      <div class="reward-row">
+        <span style="min-width:160px; color:var(--color-text-primary); font-size:13px;">Coil temp penalty</span>
+        <div class="reward-bar-wrap"><div class="reward-bar" style="width:30%; background:#E24B4A;"></div></div>
+        <span style="font-size:12px; color:var(--color-text-secondary);">−0.05 per coil &gt;80°C</span>
+      </div>
+      <div class="reward-row">
+        <span style="min-width:160px; color:var(--color-text-primary); font-size:13px;">Crash / fault penalty</span>
+        <div class="reward-bar-wrap"><div class="reward-bar" style="width:50%; background:#A32D2D;"></div></div>
+        <span style="font-size:12px; color:var(--color-text-secondary);">−1.0 (episode ends)</span>
+      </div>
+      <div class="reward-row">
+        <span style="min-width:160px; color:var(--color-text-primary); font-size:13px;">Infinite loop penalty</span>
+        <div class="reward-bar-wrap"><div class="reward-bar" style="width:20%; background:#5F5E5A;"></div></div>
+        <span style="font-size:12px; color:var(--color-text-secondary);">−0.1 if no change in 5 steps</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Why this satisfies the hackathon reward requirement</div>
+      <p>The reward is <strong style="font-weight:500;">non-sparse</strong>: every step the agent gets a signal about how well it's doing on altitude, stability, and efficiency simultaneously. Partial progress is always rewarded — getting from 0 m to 0.15 m already scores positive reward even if the target is 0.20 m. Destructive behaviors (crashing, thermal runaway, infinite no-ops) are explicitly penalized. The hard task's energy-efficiency component means reward doesn't plateau — there's always room to improve.</p>
+    </div>
+  </div>
+
+  <div id="spec" class="panel">
+    <div class="section">
+      <div class="section-title">openenv.yaml</div>
+      <div class="code-block">name: antigravity-research-lab
+version: "1.0.0"
+description: >
+  A simulated magnetic levitation propulsion testbed.
+  AI agent acts as a propulsion engineer running real-world
+  control and diagnostic experiments.
+tags: [openenv, physics, control, aerospace, maglev]
+entry_point: app:app
+tasks:
+  - id: stable_levitation
+    difficulty: easy
+    max_steps: 60
+  - id: fault_recovery
+    difficulty: medium
+    max_steps: 80
+  - id: min_energy_transit
+    difficulty: hard
+    max_steps: 100
+observation_type: antigravity_env.models.Observation
+action_type: antigravity_env.models.Action
+reward_range: [-1.0, 1.0]</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Repository structure</div>
+      <div class="code-block">antigravity-research-lab/
+├── app.py               # FastAPI app — all OpenEnv endpoints
+├── env.py               # Core simulation engine (physics)
+├── models.py            # Pydantic Observation, Action, Reward
+├── tasks/
+│   ├── stable_levitation.py
+│   ├── fault_recovery.py
+│   └── min_energy_transit.py
+├── graders/             # Deterministic grader per task
+├── baseline.py          # OpenAI client inference script
+├── openenv.yaml
+├── Dockerfile
+└── README.md</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Dockerfile (non-functional requirements)</div>
+      <div class="code-block">FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+EXPOSE 7860
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Additional required endpoints</div>
+      <div style="display:flex; flex-direction:column; gap:8px; margin-top:4px;">
+        <div style="display:flex; gap:8px; align-items:center; font-size:13px;">
+          <span class="api-pill">GET /baseline</span>
+          <span style="color:var(--color-text-secondary);">Triggers inference script, returns JSON scores for all 3 tasks</span>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; font-size:13px;">
+          <span class="api-pill">POST /grader</span>
+          <span style="color:var(--color-text-secondary);">Accepts completed episode trajectory, returns grader score 0.0–1.0</span>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; font-size:13px;">
+          <span class="api-pill">GET /tasks</span>
+          <span style="color:var(--color-text-secondary);">Returns task list + full Action schema with field descriptions</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="checklist" class="panel">
+    <div class="section">
+      <div class="section-title">Pre-submission checklist — all must pass</div>
+
+      <div class="checklist-item">
+        <span class="check">✓</span>
+        <div class="ci-label">
+          <div>HF Space deploys and responds to reset()</div>
+          <div class="ci-desc">FastAPI app on port 7860, tagged with openenv, returns 200 on ping</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <span class="check">✓</span>
+        <div class="ci-label">
+          <div>OpenEnv spec compliance via openenv validate</div>
+          <div class="ci-desc">openenv.yaml valid, typed Observation/Action/Reward Pydantic models, step()/reset()/state() all implemented</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <span class="check">✓</span>
+        <div class="ci-label">
+          <div>Dockerfile builds and runs cleanly</div>
+          <div class="ci-desc">docker build && docker run — no errors, app starts and serves requests</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <span class="check">✓</span>
+        <div class="ci-label">
+          <div>Baseline inference script reproduces scores</div>
+          <div class="ci-desc">baseline.py uses OpenAI client, reads OPENAI_API_KEY from env, runs all 3 tasks, outputs consistent scores</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <span class="check">✓</span>
+        <div class="ci-label">
+          <div>3+ tasks with graders, scores in 0.0–1.0 range</div>
+          <div class="ci-desc">Stable Levitation (easy), Fault Recovery (medium), Min-Energy Transit (hard)</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <span class="check">✓</span>
+        <div class="ci-label">
+          <div>/baseline, /grader, /tasks endpoints exposed</div>
+          <div class="ci-desc">All three additional endpoints return proper JSON responses</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <span class="check">✓</span>
+        <div class="ci-label">
+          <div>README complete</div>
+          <div class="ci-desc">Environment description, action/observation spaces, task descriptions with difficulty, setup instructions, baseline scores table</div>
+        </div>
+      </div>
+
+      <div style="margin-top:1rem; padding-top:1rem; border-top:0.5px solid var(--color-border-tertiary);">
+        <div class="section-title" style="margin-bottom:0.5rem;">Disqualification risks — what to avoid</div>
+        <div class="checklist-item">
+          <span class="cross">✗</span>
+          <div class="ci-label">
+            <div>Do not return the same grader score every time</div>
+            <div class="ci-desc">All 3 graders must produce different scores depending on agent performance</div>
+          </div>
+        </div>
+        <div class="checklist-item">
+          <span class="cross">✗</span>
+          <div class="ci-label">
+            <div>Do not copy an existing OpenEnv environment</div>
+            <div class="ci-desc">This domain (MagLev propulsion research) is novel — confirm before submitting</div>
+          </div>
+        </div>
+        <div class="checklist-item">
+          <span class="cross">✗</span>
+          <div class="ci-label">
+            <div>Do not submit without a baseline script</div>
+            <div class="ci-desc">baseline.py must run end-to-end without errors and print scores</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="scoring" class="panel">
+    <div class="section">
+      <div class="section-title">Expected scoring breakdown</div>
+      <div class="score-grid">
+        <div class="score-card">
+          <div class="score-num" style="color:var(--color-text-success);">26–30</div>
+          <div class="score-label">Real-world utility (30%)</div>
+          <p style="font-size:12px; margin-top:4px;">MagLev/propulsion R&amp;D is a genuine domain. Fills a real gap in OpenEnv — no aerospace control environment exists yet.</p>
+        </div>
+        <div class="score-card">
+          <div class="score-num" style="color:var(--color-text-info);">20–25</div>
+          <div class="score-label">Task &amp; grader quality (25%)</div>
+          <p style="font-size:12px; margin-top:4px;">3 tasks with clear easy→medium→hard range. Graders are deterministic, partial-credit, reproducible. Hard task challenges frontier models.</p>
+        </div>
+        <div class="score-card">
+          <div class="score-num" style="color:var(--color-text-info);">17–20</div>
+          <div class="score-label">Environment design (20%)</div>
+          <p style="font-size:12px; margin-top:4px;">Dense reward signal, clean state management, sensible episode boundaries, physics-grounded observations.</p>
+        </div>
+        <div class="score-card">
+          <div class="score-num" style="color:var(--color-text-warning);">12–15</div>
+          <div class="score-label">Code quality + compliance (15%)</div>
+          <p style="font-size:12px; margin-top:4px;">openenv validate passes, Dockerfile works, all endpoints respond, baseline reproduces.</p>
+        </div>
+      </div>
+      <div class="score-card" style="margin-top:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div class="score-num" style="color:#3C3489;">8–10</div>
+            <div class="score-label">Creativity &amp; novelty (10%)</div>
+          </div>
+          <p style="font-size:12px; margin:0; max-width:460px;">Domain not seen before in OpenEnv. Interesting reward design (energy-efficiency ratio, diagnostic probe trade-off). Fault injection mechanic is engaging and realistic.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Judging phase readiness</div>
+      <div class="checklist-item">
+        <span class="check">✓</span>
+        <div class="ci-label">
+          <div>Phase 1 — Automated validation</div>
+          <div class="ci-desc">HF Space deploys, spec validates, Dockerfile builds, baseline runs</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <span class="check">✓</span>
+        <div class="ci-label">
+          <div>Phase 2 — Agentic evaluation (Nemotron 3 Super)</div>
+          <div class="ci-desc">Dense reward + partial-credit graders mean the standard agent will score &gt;0 immediately, making your environment rank well even if the agent doesn't fully solve it</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <span class="check">✓</span>
+        <div class="ci-label">
+          <div>Phase 3 — Meta &amp; Hugging Face human review</div>
+          <div class="ci-desc">Real-world utility argument is strong: aerospace propulsion is an active RL research area. README explains the motivation clearly.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
