@@ -28,6 +28,9 @@ from clinical_triage_env.server.reward import compute_step_reward
 from clinical_triage_env.server.graders.stemi_grader import grade_stemi
 from clinical_triage_env.server.graders.chest_workup_grader import grade_chest_workup
 from clinical_triage_env.server.graders.mci_grader import grade_mci
+from clinical_triage_env.server.graders.sepsis_grader import grade_sepsis
+from clinical_triage_env.server.graders.stroke_grader import grade_stroke
+from clinical_triage_env.server.graders.pediatric_grader import grade_pediatric
 from clinical_triage_env.server.vitals_engine import update_vitals
 from clinical_triage_env.server.time_costs import get_action_time_cost
 
@@ -55,6 +58,28 @@ TASKS = {
         description="Mass casualty: 5 simultaneous patients, 3 beds. Agent must correctly triage under scarcity.",
         max_steps=25,
         baseline_score=0.31,
+        total_beds=3,
+    ),
+    "task_sepsis_alert": TaskInfo(
+        id="task_sepsis_alert",
+        difficulty="medium",
+        description="68yo with fever, hypotension, and altered mental status. Agent must recognize and respond to severe sepsis.",
+        max_steps=20,
+        baseline_score=0.60,
+    ),
+    "task_stroke_code": TaskInfo(
+        id="task_stroke_code",
+        difficulty="hard",
+        description="72yo with sudden onset facial droop and right-sided weakness. Time critical.",
+        max_steps=18,
+        baseline_score=0.55,
+    ),
+    "task_pediatric_resp": TaskInfo(
+        id="task_pediatric_resp",
+        difficulty="medium",
+        description="4yo with severe asthma exacerbation and retractions.",
+        max_steps=18,
+        baseline_score=0.65,
     ),
 }
 
@@ -62,6 +87,9 @@ GRADERS = {
     "task_stemi_code": grade_stemi,
     "task_chest_pain_workup": grade_chest_workup,
     "task_mci_surge": grade_mci,
+    "task_sepsis_alert": grade_sepsis,
+    "task_stroke_code": grade_stroke,
+    "task_pediatric_resp": grade_pediatric,
 }
 
 
@@ -100,10 +128,7 @@ class ClinicalTriageEnvironment:
         self._done = False
 
         # Determine available beds
-        if task_id == "task_mci_surge":
-            available_beds = 3
-        else:
-            available_beds = 10
+        available_beds = self._task_info.total_beds
 
         self._state = TriageState(
             episode_id=kwargs.get("episode_id") or str(uuid.uuid4()),
@@ -339,7 +364,7 @@ class ClinicalTriageEnvironment:
             return True
 
         # For single-patient tasks: done when disposition is set
-        if task_id in ("task_stemi_code", "task_chest_pain_workup"):
+        if task_id in ("task_stemi_code", "task_chest_pain_workup", "task_sepsis_alert", "task_stroke_code", "task_pediatric_resp"):
             if self._state.dispositions:
                 return True
 
@@ -361,7 +386,10 @@ class ClinicalTriageEnvironment:
             
             # Instant termination for fatal signal from reward engine
             last_reward_components = self._state.episode_history[-1].get("reward_components", {})
-            if "fatal_delay" in last_reward_components or "safety_guardrail" in last_reward_components and last_reward_components["safety_guardrail"] <= -10:
+            if "fatal_delay" in last_reward_components or (
+                "safety_guardrail" in last_reward_components 
+                and last_reward_components.get("safety_guardrail", 0) <= -10
+            ):
                 return True
 
             if last_action.get("action_type") == "disposition":
@@ -387,11 +415,10 @@ class ClinicalTriageEnvironment:
         """Construct observation from current state."""
         task_id = self._state.task_id
 
-        # Calculate available beds for MCI
-        available_beds = 10
-        if task_id == "task_mci_surge":
-            admits = sum(1 for d in self._state.dispositions.values() if "admit" in d)
-            available_beds = max(0, 3 - admits)
+        # Calculate available beds based on task info
+        available_beds = self._task_info.total_beds if self._task_info else 10
+        admits = sum(1 for d in self._state.dispositions.values() if "admit" in d)
+        available_beds = max(0, available_beds - admits)
 
         return TriageObservation(
             done=done,

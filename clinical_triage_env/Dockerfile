@@ -1,13 +1,14 @@
-# Stage 1: Build the Dashboard
+# Stage 1: Build Dashboard
 FROM node:20-slim AS builder
-WORKDIR /dashboard
+WORKDIR /app/frontend
 COPY clinical-triage-dashboard/package*.json ./
-RUN npm install
-COPY clinical-triage-dashboard/ .
+RUN npm ci
+COPY clinical-triage-dashboard/ ./
 RUN npm run build
 
-# Stage 2: Final Image
+# Stage 2: Python server
 FROM python:3.11-slim
+
 WORKDIR /app
 
 # Install system dependencies
@@ -21,12 +22,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
-
 # Copy built dashboard from Stage 1
-COPY --from=builder /dashboard/out ./dashboard_out
+COPY --from=builder /app/frontend/out /app/dashboard_out
+RUN pip install -e .
 
 # Expose port
 EXPOSE 7860
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:7860/health || exit 1
 
 # Performance settings
 ENV PYTHONUNBUFFERED=1

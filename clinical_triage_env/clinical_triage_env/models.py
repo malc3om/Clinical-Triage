@@ -28,7 +28,7 @@ class VitalSigns(BaseModel):
 class LabResult(BaseModel):
     """A single laboratory result."""
     name: str = Field(..., description="e.g. troponin_I, d_dimer, cbc_wbc")
-    value: float
+    value: str | float
     unit: str
     reference_range: str
     critical: bool = Field(False, description="True if critically abnormal")
@@ -126,3 +126,4 @@ class TaskInfo(BaseModel):
     description: str
     max_steps: int
     baseline_score: float
+    total_beds: int = 10
